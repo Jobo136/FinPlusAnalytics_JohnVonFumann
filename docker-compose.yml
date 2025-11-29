@@ -1,0 +1,27 @@
+# /docker-compose.yml (en la RAÍZ)
+version: "3.8"
+
+services:
+  spark:
+    # 1. Rutas de Construcción: El contexto es la raíz, el Dockerfile está en 'docker/'
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    
+    container_name: finplus_spark
+    ports:
+      - "8888:8888"   # Jupyter Lab
+      - "4040:4040"   # Spark UI (para monitorizar los trabajos)
+      
+    # 2. Volúmenes: Mapeo de carpetas desde la raíz (./)
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./src:/home/jovyan/work/src
+      - ./data:/home/jovyan/work/data
+      
+    environment:
+      # 3. Optimización de Memoria (Ajusta estos valores a la RAM de tu máquina)
+      - SPARK_DRIVER_MEMORY=4g 
+      - SPARK_EXECUTOR_MEMORY=2g
+      # Usamos el usuario "jovyan" que es el usuario por defecto de la imagen jupyter/pyspark-notebook
+      - JUPYTER_ENABLE_LAB=yes
