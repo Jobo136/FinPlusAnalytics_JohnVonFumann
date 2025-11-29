@@ -1,35 +1,27 @@
-# Imagen base con Python
-FROM python:3.11-slim
+# Usamos una imagen base que incluye Python y Java JRE/JDK,
+# y usamos la variante "slim" que es más ligera y menos propensa
+# a problemas de manejo de paquetes del sistema.
+FROM eclipse-temurin:17-jdk-jammy
 
-# Evitar prompts interactivos
-ENV DEBIAN_FRONTEND=noninteractive
+# Instalar las dependencias esenciales de Python
+# La imagen base ya trae una versión de Python, pero nos aseguramos de tener pip.
+RUN apt-get update && \
+    apt-get install -y python3-pip python3-dev build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    openjdk-11-jdk \
-    wget \
-    curl \
-    && apt-get clean
-
-# Configurar JAVA para PySpark
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH="$JAVA_HOME/bin:${PATH}"
-
-# Crear directorios
+# Copiar requirements y crear el directorio de la aplicación
 WORKDIR /app
+COPY requirements.txt .
 
-# Copiar dependencias
-COPY requirements.txt /app/requirements.txt
+# Instalar dependencias Python (incluye PySpark).
+# Usamos --no-cache-dir para mantener la imagen pequeña.
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Instalar Python packages
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Crear carpeta de trabajo conectada al host
-RUN mkdir /workspace
+# Configurar el directorio de trabajo para tus scripts/notebooks
 WORKDIR /workspace
 
-# Exponer puertos
+# Puertos
 EXPOSE 8888 4040
 
-# Comando por defecto: lanzar jupyter
+# Comando para iniciar Jupyter Lab
 CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
