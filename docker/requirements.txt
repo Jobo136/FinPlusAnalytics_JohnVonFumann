@@ -1,0 +1,11 @@
+#Aqui van las dependencias de Python para el entorno Docker si hace falta alguna meterla aqui
+
+pyspark==3.11.0
+pandas
+numpy
+matplotlib
+seaborn
+jupyterlab
+requests
+pyarrow
+scikit-learn
