@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  spark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finplus_spark
+    ports:
+      - "8888:8888"   # Jupyter
+      - "4040:4040"   # Spark UI
+    volumes:
+      - ../notebooks:/workspace/notebooks
+      - ../src:/workspace/src
+      - ../data:/workspace/data
+    environment:
+      - PYSPARK_PYTHON=python
+      - PYSPARK_DRIVER_PYTHON=jupyter
+      - PYSPARK_DRIVER_PYTHON_OPTS="lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root"
