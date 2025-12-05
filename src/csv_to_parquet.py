@@ -63,7 +63,7 @@ def convert_csv_to_parquet_spark(
     # Escribir a Parquet
     (
         df.write
-        .mode("overwrite")   # Ojo: sobrescribe si ya existe
+        .mode("overwrite")
         .parquet(str(parquet_path))
     )
 
