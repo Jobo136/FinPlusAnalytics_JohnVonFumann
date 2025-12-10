@@ -6,7 +6,7 @@
 
 ## Construcción del entorno
 cd docker
-docker-compose build
+docker-compose up --build
 
 ## Ejecución
 docker-compose up
