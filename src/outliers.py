@@ -1,112 +1,99 @@
-"""
-Detección de outliers con MAD e IQR en Spark.
-"""
+"""Outlier utilities (Spark-friendly)."""
+
+from __future__ import annotations
+
+from typing import Dict, List, Optional, Sequence
 
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
+from pyspark.sql.types import NumericType
 
 
-def mad_outliers_report(
+def numeric_columns(df: DataFrame) -> List[str]:
+    return [f.name for f in df.schema.fields if isinstance(f.dataType, NumericType)]
+
+
+def mad_outlier_report(
     df: DataFrame,
-    cols: list[str],
-    name: str,
+    cols: Optional[Sequence[str]] = None,
     threshold: float = 3.5,
-    scale_factor: float = 1.482602218505602,
     ignore_zeros: bool = True,
-) -> None:
-    """
-    Reporta outliers columna a columna usando MAD robusto.
-    - threshold: umbral del z-score robusto.
-    - ignore_zeros: si True, ignora filas con valor 0 en la columna.
-    """
-    df_cached = df.cache()
-    print(f"\n=== Outliers MAD para {name} ===")
+    scale_factor: float = 1.482602218505602,  # for normal dist
+) -> Dict[str, Dict[str, float]]:
+    """Robust Z-score using MAD.
 
+    Returns a dict per column with median, mad, outlier_count, outlier_pct.
+    """
+    if cols is None:
+        cols = numeric_columns(df)
+
+    results: Dict[str, Dict[str, float]] = {}
     for colname in cols:
-        df_col = df_cached
+        base = df
         if ignore_zeros:
-            df_col = df_col.filter(F.col(colname) != 0)
+            base = base.filter(F.col(colname) != 0)
 
-        total_col_rows = df_col.count()
-        if total_col_rows == 0:
-            print(f"\n⚠️ Columna {colname}: todas las filas filtradas (0 o null).")
+        n = base.count()
+        if n == 0:
+            results[colname] = {"outlier_count": 0, "outlier_pct": 0.0, "median": None, "mad": None}
             continue
 
-        # Mediana
-        median = df_col.select(
-            F.expr(f"percentile_approx({colname}, 0.5)").alias("median")
-        ).collect()[0]["median"]
+        median = base.select(F.expr(f"percentile_approx({colname}, 0.5)").alias("m")).collect()[0]["m"]
 
-        # MAD "crudo"
-        mad_raw = df_col.select(
-            F.expr(f"percentile_approx(ABS({colname} - {median}), 0.5)").alias("mad")
-        ).collect()[0]["mad"]
+        # MAD = median(|x - median(x)|)
+        abs_dev = base.select(F.abs(F.col(colname) - F.lit(median)).alias("abs_dev"))
+        mad_raw = abs_dev.select(F.expr("percentile_approx(abs_dev, 0.5)").alias("mad")).collect()[0]["mad"]
 
         if mad_raw is None or mad_raw == 0:
-            print(f"\nColumna {colname}: MAD = {mad_raw} (no se puede aplicar MAD robusto).")
+            results[colname] = {"outlier_count": 0, "outlier_pct": 0.0, "median": float(median), "mad": float(mad_raw or 0.0)}
             continue
 
-        mad_scaled = mad_raw * scale_factor
+        mad_scaled = float(mad_raw) * float(scale_factor)
+        robust_z = F.abs((F.col(colname) - F.lit(median)) / F.lit(mad_scaled))
 
-        robust_z = F.abs((F.col(colname) - median) / mad_scaled)
-        count_outliers = df_col.filter(robust_z > threshold).count()
-        perc_outliers = (count_outliers / total_col_rows) * 100
+        out_count = base.filter(robust_z > F.lit(threshold)).count()
+        out_pct = out_count / n * 100
 
-        print(f"\n📌 Columna: {colname}")
-        print(f"   - Outliers (MAD): {count_outliers} ({perc_outliers:.2f}%)")
-        print(f"   - Mediana = {median}")
-        print(f"   - MAD crudo = {mad_raw}")
-        print(f"   - MAD escalado = {mad_scaled}")
+        results[colname] = {
+            "median": float(median),
+            "mad": float(mad_scaled),
+            "outlier_count": float(out_count),
+            "outlier_pct": float(out_pct),
+        }
 
-    df_cached.unpersist()
+    return results
 
 
-def iqr_outliers_report(
+def iqr_outlier_report(
     df: DataFrame,
-    cols: list[str],
-    name: str,
+    cols: Optional[Sequence[str]] = None,
     factor: float = 1.5,
-    sample_values: int = 50,
-) -> None:
-    """
-    Reporta outliers columna a columna usando el criterio IQR.
-    - factor: multiplicador de IQR (típico 1.5).
-    - sample_values: nº de valores outliers a mostrar como ejemplo (máx).
-    """
-    df_cached = df.cache()
-    n_rows = df_cached.count()
+) -> Dict[str, Dict[str, float]]:
+    """IQR outliers (Tukey). Returns per-column dict with bounds & counts."""
+    if cols is None:
+        cols = numeric_columns(df)
 
-    print(f"\n=== Outliers IQR para {name} ===")
-
+    n_total = df.count()
+    results: Dict[str, Dict[str, float]] = {}
     for colname in cols:
-        q1 = df_cached.select(F.expr(f"percentile_approx({colname}, 0.25)")).collect()[0][0]
-        q3 = df_cached.select(F.expr(f"percentile_approx({colname}, 0.75)")).collect()[0][0]
+        q1 = df.select(F.expr(f"percentile_approx({colname}, 0.25)").alias("q1")).collect()[0]["q1"]
+        q3 = df.select(F.expr(f"percentile_approx({colname}, 0.75)").alias("q3")).collect()[0]["q3"]
         iqr = q3 - q1
-
         lower = q1 - factor * iqr
         upper = q3 + factor * iqr
 
-        outliers_df = df_cached.filter(
-            (F.col(colname) < lower) | (F.col(colname) > upper)
-        )
+        out_df = df.filter((F.col(colname) < F.lit(lower)) | (F.col(colname) > F.lit(upper)))
+        out_count = out_df.count()
+        out_pct = (out_count / n_total * 100) if n_total else 0.0
 
-        count_outliers = outliers_df.count()
-        percentage_outliers = (count_outliers / n_rows) * 100 if n_rows > 0 else 0
+        results[colname] = {
+            "q1": float(q1),
+            "q3": float(q3),
+            "iqr": float(iqr),
+            "lower": float(lower),
+            "upper": float(upper),
+            "outlier_count": float(out_count),
+            "outlier_pct": float(out_pct),
+        }
 
-        # Muestra solo algunos ejemplos de valores outliers
-        valores = (
-            outliers_df.select(colname)
-            .limit(sample_values)
-            .toPandas()[colname]
-            .values
-            if count_outliers > 0
-            else []
-        )
-
-        print(f"\n📌 Columna: {colname}")
-        print(f"   - Nº de outliers: {count_outliers}")
-        print(f"   - Porcentaje: {percentage_outliers:.2f}%")
-        print(f"   - Rango permitido: [{lower}, {upper}]")
-        print(f"   - Ejemplos de valores outliers: {valores}")
-
-    df_cached.unpersist()
+    return results

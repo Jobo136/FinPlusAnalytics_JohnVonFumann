@@ -1,33 +1,19 @@
-"""
-Módulo de entrada/salida de datos para Spark.
-"""
+"""I/O helpers."""
 
-from pathlib import Path
-from pyspark.sql import SparkSession, DataFrame
+from __future__ import annotations
 
-
-def read_parquet(spark: SparkSession, path: str | Path) -> DataFrame:
-    """
-    Lee un dataset Parquet y devuelve un DataFrame de Spark.
-    """
-    return spark.read.parquet(str(path))
+from pyspark.sql import DataFrame, SparkSession
 
 
-def write_parquet(df: DataFrame, path: str | Path, mode: str = "overwrite") -> None:
-    """
-    Escribe un DataFrame de Spark en formato Parquet.
-    """
-    df.write.mode(mode).parquet(str(path))
+def read_parquet(spark: SparkSession, path: str) -> DataFrame:
+    return spark.read.parquet(path)
 
 
-def spark_to_csv(df: DataFrame, path: str | Path, mode: str = "overwrite") -> None:
-    """
-    Exporta un DataFrame de Spark a CSV mediante toPandas().
-    Úsalo solo para tamaños que quepan en memoria.
-    """
-    import pandas as pd  # Import local para que no sea obligatorio en todo el proyecto
+def write_parquet(df: DataFrame, path: str, mode: str = "overwrite") -> None:
+    df.write.mode(mode).parquet(path)
 
+
+def to_csv_via_pandas(df: DataFrame, path: str, index: bool = False) -> None:
+    """Collect to pandas and write CSV (use only if dataset fits in memory)."""
     pdf = df.toPandas()
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pdf.to_csv(path, index=False)
+    pdf.to_csv(path, index=index)

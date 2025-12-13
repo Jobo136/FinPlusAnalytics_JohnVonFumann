@@ -1,0 +1,51 @@
+# 📋 RESUMEN SIMPLE DE FUNCIONES POR ARCHIVO
+
+## config.py
+CONFIGURACIÓN - No tiene funciones, solo:
+- Variables de rutas (BEHAVIOURAL_PATH_RAW, CLIENTS_PATH_RAW, etc.)
+- Listas de columnas para limpiar (BEH_DROP_COLS, CLI_DROP_COLS)
+- Dataclass Paths con todas las rutas
+
+## spark.py
+get_spark() - Crea sesión Spark con nombre y configuraciones
+
+## io.py
+read_parquet() - Lee archivos Parquet
+write_parquet() - Escribe DataFrame a Parquet
+to_csv_via_pandas() - Convierte a CSV (solo datos pequeños)
+
+## csv_to_parquet.py
+convert_csv_to_parquet_spark() - Convierte CSV a Parquet con Spark
+
+## quality.py
+quick_quality_report() - Reporte rápido con KPIs de calidad
+
+## utils.py
+shape() - Devuelve (filas, columnas)
+print_header() - Imprime título con formato
+
+## profiling.py
+show_head_and_schema() - Muestra primeras filas y esquema
+describe_df() - Estadísticas descriptivas básicas
+report_missing() - Cuenta valores nulos por columna
+count_row_duplicates() - Cuenta filas duplicadas
+count_missing_or_nan() - Alternativa para contar nulos
+count_zeros() - Cuenta valores cero por columna
+count_distinct_row_duplicates() - Duplicados con dropDuplicates
+
+## schema.py
+assert_has_columns() - Valida que tenga columnas requeridas
+columns_summary() - Resumen de tipos de datos
+
+## cleaning.py
+drop_columns() - Elimina columnas especificadas
+dropna_subset() - Elimina filas con NaN en columnas específicas
+
+## outliers.py
+numeric_columns() - Identifica columnas numéricas
+mad_outlier_report() - Detecta outliers con método MAD
+iqr_outlier_report() - Detecta outliers con método IQR
+
+## consulta_sql.py
+create_temp_views() - Crea vistas SQL temporales
+get_dynamic_segmentation_query() - Genera consulta SQL dinámica

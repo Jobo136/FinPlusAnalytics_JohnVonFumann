@@ -1,3 +1,16 @@
+╔══════════════════════════════════╗
+║   █████╗ ██╗   ██╗ ███████╗      ║
+║       ██║ ██║   ██║ ██╔════╝     ║
+║       ██║ ██║   ██║ █████╗       ║
+║ ██╗   ██║ ╚██╗ ██╔╝ ██╔══╝       ║
+║ ╚█████╔╝    ╚████╔╝  ██║         ║ Jhon Von Fumann. SL
+║  ╚════╝      ╚═══╝   ╚═╝         ║ © 2025 Aritz (Co-founder), Ángela (Co-founder), Javier (Co-founder) y Andrés(Co-founder).
+╚══════════════════════════════════╝ All Rights Reserved
+
+
+
+
+
 # Entorno Docker del proyecto FinPlus
 
 ## Requisitos

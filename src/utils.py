@@ -1,17 +1,16 @@
-"""
-Utilidades genéricas de apoyo (no específicas de EDA).
-"""
+"""Small utilities."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, Iterable, Optional
 
 from pyspark.sql import DataFrame
-from pyspark.sql.types import NumericType
 
 
-def get_numeric_columns(df: DataFrame) -> list[str]:
-    """
-    Devuelve una lista con los nombres de las columnas numéricas de un DataFrame de Spark.
-    """
-    return [
-        field.name
-        for field in df.schema.fields
-        if isinstance(field.dataType, NumericType)
-    ]
+def shape(df: DataFrame) -> tuple[int, int]:
+    return (df.count(), len(df.columns))
+
+
+def print_header(title: str) -> None:
+    bar = "=" * max(10, len(title))
+    print(f"\n{bar}\n{title}\n{bar}")
