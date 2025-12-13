@@ -4,6 +4,7 @@
 - Docker >= 20
 - docker-compose >= 1.29
 
+
 ## Construcción del entorno
 cd docker
 docker-compose up --build
