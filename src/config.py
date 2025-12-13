@@ -18,6 +18,14 @@ CLIENTS_CSV_CLEAN     = "/home/jovyan/work/data/CLIENTS_CLEAN.csv"
 
 SPARK_APP_NAME = "EDA_PIPELINE_FORMAL"
 
+COMBINED_PATH = "/home/jovyan/work/data/COMUNES"
+COMBINED_CSV = "/home/jovyan/work/data/COMUNES.csv"
+
+
+SOLO_CLI_PATH = "/home/jovyan/work/data/SOLO_CLIENTS"
+SOLO_BEH_PATH = "/home/jovyan/work/data/SOLO_BEHAVIOURAL"
+SOLO_CLI_CSV = "/home/jovyan/work/data/SOLO_CLIENTS.csv"
+SOLO_BEH_CSV = "/home/jovyan/work/data/SOLO_BEHAVIOURAL.csv"
 # ===== Cleaning rules =====
 # Behavioural
 BEH_DROP_COLS: List[str] = ["CURRENCY"]
