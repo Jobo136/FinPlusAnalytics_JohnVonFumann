@@ -49,3 +49,4 @@ iqr_outlier_report() - Detecta outliers con método IQR
 ## consulta_sql.py
 create_temp_views() - Crea vistas SQL temporales
 get_dynamic_segmentation_query() - Genera consulta SQL dinámica
+
