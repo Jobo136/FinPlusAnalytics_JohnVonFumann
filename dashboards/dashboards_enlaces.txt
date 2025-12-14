@@ -1,0 +1,19 @@
+Dashboard 1: Engagement
+    Enlace: https://public.tableau.com/views/Dashboard_1_17657505067160/Dashboard1?:language=es-ES&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link
+    KPI'S relacionados: Antigüedad del cliente y actividad reciente. 
+
+
+Dashboard 2: Risks
+    Enlace: https://public.tableau.com/views/Dashboard_2_17657505809910/Dashboard2?:language=es-ES&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link 
+    KPI'S relacionados: Deuda acumulada y balance actual.
+
+
+Dashboard 3: Costs
+    Enlace: https://public.tableau.com/views/Dashboard_3_17657506257530/Dashboard1?:language=es-ES&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link
+    KPI'S relacionados: Tasa de utilización de crédito, ratio de pago y gasto.
+
+
+
+Dashboard 4: Credits
+    Enlace: https://public.tableau.com/views/Dashboard_4_17657506493720/Dashboard1?:language=es-ES&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link 
+    KPI'S relacionados: Número de préstamos acumulados.
