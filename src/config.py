@@ -26,6 +26,9 @@ SOLO_CLI_PATH = "/home/jovyan/work/data/SOLO_CLIENTS"
 SOLO_BEH_PATH = "/home/jovyan/work/data/SOLO_BEHAVIOURAL"
 SOLO_CLI_CSV = "/home/jovyan/work/data/SOLO_CLIENTS.csv"
 SOLO_BEH_CSV = "/home/jovyan/work/data/SOLO_BEHAVIOURAL.csv"
+
+FINAL_FEATURES_PATH = "/home/jovyan/work/data/FINAL_FEATURES"
+FINAL_FEATURES_CSV = "/home/jovyan/work/data/FINAL_FEATURES.csv"
 # ===== Cleaning rules =====
 # Behavioural
 BEH_DROP_COLS: List[str] = ["CURRENCY"]

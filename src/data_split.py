@@ -32,7 +32,7 @@ def align_and_join_datasets(df_beh: DataFrame, df_cli: DataFrame) -> DataFrame:
     (Lógica central de Separación_datasets.ipynb)
     """
     # Se dropean columnas en df_beh que probablemente causen problemas o son redundantes con df_cli
-    df_beh_dropped = df_beh.drop('CONTRACT_ID', 'DATE') 
+    df_beh_dropped = df_beh.drop('CONTRACT_ID') 
     
     # Join
     df_comunes_final = df_cli.join(
