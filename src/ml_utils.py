@@ -1,6 +1,3 @@
-# =============================================================================
-# src/ml_utils.py (VERSIÓN ROBUSTA)
-# =============================================================================
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.ml import Pipeline
@@ -111,7 +108,7 @@ def profile_clusters(df: DataFrame, segment_col: str) -> Tuple[DataFrame, DataFr
     # --- 2. Perfilado Categórico (Moda) ---
     valid_cat_cols = [c for c in cat_cols if c in df.columns and c != segment_col]
     
-    # Si no hay categóricas (tu caso actual), devolvemos un DF vacío o con solo el segmento
+    # Si no hay categóricas, devolvemos un DF vacío o con solo el segmento
     if not valid_cat_cols:
         df_perfil_categorico = df.select(segment_col).distinct().orderBy(segment_col)
     else:

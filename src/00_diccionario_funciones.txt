@@ -1,0 +1,56 @@
+A continuación se detalla la funcionalidad de cada módulo dentro del directorio `src/`.
+
+### Configuración y Utilidades Base
+
+| Archivo | Función / Clase | Descripción |
+| :--- | :--- | :--- |
+| **`src/config.py`** | `Paths` (Class) | Dataclass que centraliza todas las rutas de datos (Raw, Clean, CSV, Parquet). |
+| | `BEH_DROP_COLS` | Lista de columnas a eliminar en el dataset comportamental. |
+| | `CLI_DROPNA_SUBSET` | Lista de columnas críticas que no deben tener nulos en clientes. |
+| **`src/spark.py`** | `get_spark()` | Inicializa o recupera la sesión de Spark con la configuración del proyecto. |
+| **`src/io.py`** | `read_parquet()` | Lee archivos Parquet de forma eficiente. |
+| | `write_parquet()` | Escribe DataFrames a disco en formato Parquet (mode='overwrite'). |
+| | `to_csv_via_pandas()` | Exporta DataFrames pequeños a CSV (útil para reportes finales). |
+| **`src/csv_to_parquet.py`** | `convert_csv_to_parquet_spark()` | Pipeline de ingestión: lee CSV masivos, infiere esquema y guarda en Parquet particionado. |
+
+### Limpieza y Calidad de Datos
+
+| Archivo | Función | Descripción |
+| :--- | :--- | :--- |
+| **`src/cleaning.py`** | `drop_columns()` | Elimina columnas específicas del DataFrame si existen. |
+| | `dropna_subset()` | Elimina filas que contengan nulos en un subconjunto de columnas clave. |
+| **`src/quality.py`** | `quick_quality_report()` | Genera KPIs rápidos: conteo de filas, columnas, duplicados y celdas vacías. |
+| **`src/outliers.py`** | `mad_outlier_report()` | Detecta outliers usando **MAD** (Median Absolute Deviation) - Método robusto. |
+| | `iqr_outlier_report()` | Detecta outliers usando **IQR** (Interquartile Range) - Método de Tukey. |
+| **`src/schema.py`** | `assert_has_columns()` | Valida que el DataFrame contenga las columnas obligatorias para el proceso. |
+
+### Análisis Exploratorio (EDA)
+
+| Archivo | Función | Descripción |
+| :--- | :--- | :--- |
+| **`src/profiling.py`** | `describe_df()` | Muestra estadísticas descriptivas básicas y dimensiones del dataset. |
+| | `report_missing()` | Calcula y muestra el porcentaje de valores nulos por columna. |
+| | `calculate_spark_stats()` | Calcula media, mediana, moda y desviación estándar de variables numéricas. |
+| | `compute_corr_matrix_and_report()` | Genera matriz de correlación de Pearson y reporta pares con alta colinealidad. |
+
+### Lógica de Negocio y Feature Engineering
+
+| Archivo | Función | Descripción |
+| :--- | :--- | :--- |
+| **`src/metrics.py`** | `calculate_risk()` | Genera el **RM_SCORE** (Riesgo de Moroso) basado en reglas de negocio (impagos, denegaciones). |
+| | `calculate_credit_ratios...()` | Calcula métricas financieras: Ratio de Pago, Tasa Pay/Draw y Utilización de Crédito (CUR). |
+| | `calculate_debt_and_net_income()` | Calcula DTI (Debt-to-Income) y segmenta clientes en buckets de riesgo. |
+| | `calculate_caq_segment()` | Segmenta clientes por calidad (CAQ) usando cuantiles de ingresos y límites. |
+| **`src/engagement.py`** | `calculate_full_engagement_analysis()` | Orquestador que calcula las 3 dimensiones de vinculación (Variedad, Intensidad, Hábitos). |
+| | `calculate_dimension_variety()` | Puntúa la diversidad de canales usados (ATM, POS, Otros). |
+| | `calculate_dimension_intensity()` | Puntúa el volumen y frecuencia de uso de la tarjeta. |
+| **`src/data_split.py`** | `align_and_join_datasets()` | Realiza el cruce (Inner Join) limpio entre tablas de Clientes y Comportamiento. |
+| | `get_solo_datasets()` | Identifica y separa registros que no cruzan (Solo Clientes / Solo Behavioural). |
+
+### Machine Learning
+
+| Archivo | Función | Descripción |
+| :--- | :--- | :--- |
+| **`src/ml_utils.py`** | `create_clustering_pipeline()` | Crea el pipeline de Spark ML: StringIndexer -> OneHot -> VectorAssembler -> Scaler -> KMeans. |
+| | `find_optimal_k()` | Itera sobre un rango de K clusters calculando el **Silhouette Score** para hallar el óptimo. |
+| | `profile_clusters()` | Genera un reporte estadístico (medias y modas) para interpretar los clusters resultantes. |

@@ -1,12 +1,7 @@
-"""Project configuration for the EDA pipeline.
-
-Edit paths and column-lists here instead of inside the notebook.
-"""
-
 from dataclasses import dataclass
 from typing import List
 
-# ===== Paths (edit to match your workspace) =====
+# ===== Paths  =====
 BEHAVIOURAL_PATH_RAW = "/home/jovyan/work/data/BEHAVIOURAL"
 CLIENTS_PATH_RAW     = "/home/jovyan/work/data/CLIENTS"
 
@@ -29,13 +24,12 @@ SOLO_BEH_CSV = "/home/jovyan/work/data/SOLO_BEHAVIOURAL.csv"
 
 FINAL_FEATURES_PATH = "/home/jovyan/work/data/FINAL_FEATURES"
 FINAL_FEATURES_CSV = "/home/jovyan/work/data/FINAL_FEATURES.csv"
-# ===== Cleaning rules =====
+# ===== Reglas de limpieza =====
 # Behavioural
 BEH_DROP_COLS: List[str] = ["CURRENCY"]
 
 # Clients
-# NOTE: in your original notebook this list was truncated with "...".
-# Add/remove columns to match your real schema.
+
 CLI_DROPNA_SUBSET: List[str] = [
     "NUM_PREVIOUS_LOAN_APP",
     "LOAN_ANNUITY_PAYMENT_MAX",

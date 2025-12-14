@@ -1,6 +1,3 @@
-# =============================================================================
-# src/metrics.py (CÓDIGO FINAL CON TODAS LAS MÉTRICAS)
-# =============================================================================
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F, Window
 from typing import List

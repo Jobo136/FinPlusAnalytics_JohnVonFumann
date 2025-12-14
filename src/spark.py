@@ -1,6 +1,4 @@
-"""Spark session helpers."""
-
-from __future__ import annotations
+from __future__ import annotations #Permite usar las nuevas anotaciones de tipo (type hints) de forma diferida
 
 from typing import Dict, Optional
 from pyspark.sql import SparkSession

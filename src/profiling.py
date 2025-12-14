@@ -1,6 +1,4 @@
-"""Lightweight EDA/profiling for Spark DataFrames."""
-
-from __future__ import annotations
+from __future__ import annotations #Permite usar las nuevas anotaciones de tipo (type hints) de forma diferida
 
 from typing import Dict, List, Optional
 
@@ -9,7 +7,6 @@ from pyspark.sql import functions as F
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.stat import Correlation
 from pyspark.sql.types import StringType, StructType, StructField, DoubleType
-from typing import List
 
 # Importa las funciones necesarias de otros módulos
 from src.outliers import numeric_columns # Para obtener la lista de columnas numéricas
@@ -100,13 +97,9 @@ def count_distinct_row_duplicates(df: DataFrame, name: str) -> int:
     print(f"Filas duplicadas: {dup}")
     return int(dup)
 
-# Asumo que tienes una función para obtener columnas numéricas,
-# por ejemplo, de tu módulo 'outliers.py'
-# from src.outliers import numeric_columns 
-# from src.utils import print_header 
+
 
 def get_numeric_columns(df: DataFrame) -> list[str]:
-    # Placeholder si no tienes src/outliers.py
     return [f.name for f in df.schema.fields if isinstance(f.dataType, NumericType)]
 
 
@@ -114,8 +107,6 @@ def get_numeric_columns(df: DataFrame) -> list[str]:
 def calculate_spark_stats(df: DataFrame, name: str) -> DataFrame:
     """
     Calcula estadísticas descriptivas detalladas para todas las columnas numéricas.
-    NOTA: Se asegura que todos los valores estadísticos sean float para evitar 
-    PySparkTypeError al crear el DataFrame de resumen.
     """
     spark = df.sparkSession
     numeric_cols = numeric_columns(df)

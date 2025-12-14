@@ -1,6 +1,4 @@
-"""Small utilities."""
-
-from __future__ import annotations
+from __future__ import annotations #Permite usar las nuevas anotaciones de tipo (type hints) de forma diferida
 
 from typing import Any, Dict, Iterable, Optional
 

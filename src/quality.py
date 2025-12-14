@@ -1,6 +1,4 @@
-"""Quality checks and simple reporting wrappers."""
-
-from __future__ import annotations
+from __future__ import annotations #Permite usar las nuevas anotaciones de tipo (type hints) de forma diferida
 
 from typing import Dict
 

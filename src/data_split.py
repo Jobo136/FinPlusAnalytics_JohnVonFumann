@@ -1,4 +1,3 @@
-# src/data_split.py (NUEVO ARCHIVO)
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from typing import Dict
@@ -6,7 +5,7 @@ from typing import Dict
 def get_client_id_sets(df_beh: DataFrame, df_cli: DataFrame) -> Dict[str, DataFrame]:
     """
     Calcula y retorna los conjuntos de CLIENT_ID comunes, solo en clientes, y solo en behavioural.
-    (Extracción de Separación_datasets.ipynb)
+    (Extracción de Separación_datasets)
     """
     ids_beh = df_beh.select("CLIENT_ID").distinct()
     ids_cli = df_cli.select("CLIENT_ID").distinct()
@@ -28,7 +27,6 @@ def get_client_id_sets(df_beh: DataFrame, df_cli: DataFrame) -> Dict[str, DataFr
 def align_and_join_datasets(df_beh: DataFrame, df_cli: DataFrame) -> DataFrame:
     """
     Realiza un INNER JOIN de los datasets clientes y behavioural por CLIENT_ID.
-    Asume que en df_beh hay columnas que deben ser dropeadas para evitar duplicados en el join (ej. 'CONTRACT_ID', 'DATE').
     (Lógica central de Separación_datasets.ipynb)
     """
     # Se dropean columnas en df_beh que probablemente causen problemas o son redundantes con df_cli

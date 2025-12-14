@@ -1,6 +1,4 @@
-"""Outlier utilities (Spark-friendly)."""
-
-from __future__ import annotations
+from __future__ import annotations #Permite usar las nuevas anotaciones de tipo (type hints) de forma diferida
 
 from typing import Dict, List, Optional, Sequence
 
@@ -18,7 +16,7 @@ def mad_outlier_report(
     cols: Optional[Sequence[str]] = None,
     threshold: float = 3.5,
     ignore_zeros: bool = True,
-    scale_factor: float = 1.482602218505602,  # for normal dist
+    scale_factor: float = 1.482602218505602,  # distribucion normal
 ) -> Dict[str, Dict[str, float]]:
     """Robust Z-score using MAD.
 
