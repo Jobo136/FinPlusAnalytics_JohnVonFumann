@@ -8,7 +8,12 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.stat import Correlation
-from pyspark.sql.types import StringType, NumericType
+from pyspark.sql.types import StringType, StructType, StructField, DoubleType
+from typing import List
+
+# Importa las funciones necesarias de otros módulos
+from src.outliers import numeric_columns # Para obtener la lista de columnas numéricas
+from src.utils import print_header # Para formato de reporte
 
 from src.utils import print_header, shape
 
@@ -104,76 +109,79 @@ def get_numeric_columns(df: DataFrame) -> list[str]:
     # Placeholder si no tienes src/outliers.py
     return [f.name for f in df.schema.fields if isinstance(f.dataType, NumericType)]
 
+
+
 def calculate_spark_stats(df: DataFrame, name: str) -> DataFrame:
     """
     Calcula estadísticas descriptivas detalladas para todas las columnas numéricas.
-    (Lógica extraída de PERFILADO_SPARK.ipynb)
+    NOTA: Se asegura que todos los valores estadísticos sean float para evitar 
+    PySparkTypeError al crear el DataFrame de resumen.
     """
     spark = df.sparkSession
-    numeric_cols = get_numeric_columns(df) # Usar tu función real
+    numeric_cols = numeric_columns(df)
     
-    stats_list = []
-    
-    # describe() de Spark da min, max, mean, stddev. Se complementa con moda y mediana
+    if not numeric_cols:
+        print_header(f"{name} - Estadísticas Detalladas")
+        print("No se encontraron columnas numéricas.")
+        return spark.createDataFrame([], "Columna STRING, Media DOUBLE")
+        
     spark_stats = df.describe(*numeric_cols).collect()
+    stats_list = []
     
     for c in numeric_cols:
         col_stats = {row['summary']: row[c] for row in spark_stats}
         
         # Mediana (Q50)
-        # Usar approxQuantile por ser distribuido
         try:
+            # Resultado es float
             mediana = df.approxQuantile(c, [0.5], 0.01)[0]
         except Exception:
             mediana = None
         
-        # Moda (usando groupBy para obtener el valor más frecuente)
+        # Moda (valor más frecuente)
         moda_result = df.groupBy(c).count().orderBy(F.desc('count')).limit(1).collect()
-        moda = moda_result[0][c] if moda_result else None
         
-        # Coeficiente de Variación (CV) = DesvStd / Media
-        stddev = float(col_stats['stddev']) if 'stddev' in col_stats else 0
-        mean = float(col_stats['mean']) if 'mean' in col_stats else 0
+        moda = None
+        if moda_result:
+            moda_val = moda_result[0][c]
+            try:
+                # FIX: Forzar a float para consistencia de tipos en el DF final
+                moda = float(moda_val) 
+            except (ValueError, TypeError):
+                # Si es un ID muy grande o un string que se coló, se pone None
+                moda = None
+        
+        # Los demás valores son float de describe()
+        mean = float(col_stats.get('mean', 0))
+        stddev = float(col_stats.get('stddev', 0))
         cv = stddev / mean if mean != 0 else float('nan')
         
-        # Range
-        min_val = float(col_stats['min']) if 'min' in col_stats else 0
-        max_val = float(col_stats['max']) if 'max' in col_stats else 0
-        rango = max_val - min_val
-
         stats_list.append({
             "Columna": c,
-            "Media": mean,
-            "Mediana": mediana,
-            "Moda": moda,
-            "DesvStd": stddev,
-            "CoefVar": cv,
-            "Rango": rango,
-            "Min": min_val,
-            "Max": max_val,
+            "Media": mean, 
+            "Mediana": mediana, 
+            "Moda": moda, 
+            "DesvStd": stddev, 
+            "CoefVar": cv, 
+            "Min": float(col_stats.get('min', 0)), 
+            "Max": float(col_stats.get('max', 0)), 
         })
 
-    # El esquema debe ser definido para asegurar el tipo de dato, simplificado aquí:
-    # print_header(f"{name} - Estadísticas Detalladas") # Usar tu función real
-    resumen_df = spark.createDataFrame(stats_list)
-    resumen_df.show(truncate=False)
-    return resumen_df
-
+    return spark.createDataFrame(stats_list)
 
 def report_categorical_freq(df: DataFrame, name: str, max_categories: int = 20) -> None:
     """
     Filtra y muestra la frecuencia de las columnas categóricas con N o menos categorías únicas.
-    (Lógica extraída de PERFILADO_SPARK.ipynb)
     """
     string_cols = [f.name for f in df.schema.fields if isinstance(f.dataType, StringType) and f.name != 'CLIENT_ID']
     
     columnas_validas = []
     for c in string_cols:
-        n_cat = df.select(F.countDistinct(c)).first()[0]
+        n_cat = df.select(F.approx_count_distinct(c)).first()[0] 
         if n_cat <= max_categories:
             columnas_validas.append(c)
 
-    # print_header(f"{name} - Frecuencias Categóricas (<= {max_categories})") # Usar tu función real
+    print_header(f"{name} - Frecuencias Categóricas (<= {max_categories})")
     for c in columnas_validas:
         print(f"\n===== Frecuencia de {c} =====")
         frecuencias = (
@@ -183,27 +191,39 @@ def report_categorical_freq(df: DataFrame, name: str, max_categories: int = 20) 
         )
         frecuencias.show(truncate=False)
 
+
 def compute_corr_matrix_and_report(df: DataFrame, df_name: str, threshold: float = 0.4) -> DataFrame:
     """
     Calcula la matriz de correlación de Pearson y reporta los pares con una correlación (|r|) 
     superior a un umbral.
-    (Lógica extraída de PERFILADO_SPARK.ipynb)
     """
     spark = df.sparkSession
-    numeric_cols = get_numeric_columns(df) # Usar tu función real
+    numeric_cols = numeric_columns(df)
     
-    # 1. Ensamblar el vector de features
-    assembler = VectorAssembler(inputCols=numeric_cols, outputCol="features")
-    vector_df = assembler.transform(df).select("features")
-    
-    # 2. Calcular la matriz de correlación (Pearson)
-    # Correlation.corr requiere que el DF no esté vacío
-    if vector_df.count() == 0:
-        print(f"Advertencia: DataFrame {df_name} está vacío. No se puede calcular la correlación.")
-        return spark.createDataFrame([], "Variable_A STRING, Variable_B STRING, Correlacion DOUBLE, Abs_Correlacion DOUBLE")
+    # 4. Crear un esquema explícito (CORRECCIÓN CLAVE)
+    # Define el esquema para que PySpark no tenga que inferir el tipo de float
+    schema = StructType([
+        StructField("Variable_A", StringType(), True),
+        StructField("Variable_B", StringType(), True),
+        StructField("Correlacion", DoubleType(), True),
+        StructField("Abs_Correlacion", DoubleType(), True),
+    ])
 
-    matrix = Correlation.corr(vector_df, "features", "pearson").collect()[0][0]
-    corr_array = matrix.toArray()
+    if not numeric_cols:
+        print("ADVERTENCIA: No hay columnas numéricas para calcular la correlación.")
+        return spark.createDataFrame([], schema)
+
+    # 1. Ensamblar el vector de features (rellenar nulos con 0)
+    assembler = VectorAssembler(inputCols=numeric_cols, outputCol="features")
+    vector_df = assembler.transform(df.na.fill(0)).select("features") 
+    
+    # 2. Calcular la matriz de correlación
+    try:
+        matrix = Correlation.corr(vector_df, "features", "pearson").collect()[0][0]
+        corr_array = matrix.toArray()
+    except Exception as e:
+        print(f"Error al calcular la correlación: {e}")
+        return spark.createDataFrame([], schema)
     
     # 3. Extraer pares de alta correlación
     correlacion_data = []
@@ -213,17 +233,15 @@ def compute_corr_matrix_and_report(df: DataFrame, df_name: str, threshold: float
                 corr_val = corr_array[i][j]
                 if abs(corr_val) >= threshold:
                     correlacion_data.append(
-                        (col1, col2, corr_val, abs(corr_val))
+                        (col1, col2, float(corr_val), float(abs(corr_val)))
                     )
                     
-    # 4. Crear un DataFrame de Spark con los resultados
-    schema = ["Variable_A", "Variable_B", "Correlacion", "Abs_Correlacion"]
+    # 4. Crear el DataFrame de Spark usando el esquema explícito
     correlacion_df = spark.createDataFrame(correlacion_data, schema=schema)
     
-    # 5. Reportar resultados
     comb_pairs_df = correlacion_df.orderBy(F.desc("Abs_Correlacion"))
     
-    # print_header(f"Correlaciones |r| >= {threshold} en {df_name}") # Usar tu función real
+    print_header(f"Correlaciones |r| >= {threshold} en {df_name}")
     comb_pairs_df.show(comb_pairs_df.count(), truncate=False)
     
     return correlacion_df
